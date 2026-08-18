@@ -1,51 +1,62 @@
-# Failure Analysis — Lab 18: Production RAG
+# Failure Analysis
 
-**Nhóm:** [Tên nhóm]  
-**Thành viên:** [Tên 1 → M1] · [Tên 2 → M2] · [Tên 3 → M3] · [Tên 4 → M4]
+## Bottom-5 Worst Questions
 
----
+### 1. Bao lâu phải đổi mật khẩu một lần?
+- **Worst metric:** faithfulness
+- **Score:** 0.0
+- **Diagnosis:** LLM hallucinating
+- **Failure category:** Generation
+- **Root cause:** The LLM hallucinates facts not strictly within the retrieved context, or contradicts context.
+- **Suggested fix:** Tighten prompt, lower temperature.
 
-## RAGAS Scores
+### 2. Muốn mua thiết bị trị giá 55 triệu cần ai phê duyệt?
+- **Worst metric:** faithfulness
+- **Score:** 0.0
+- **Diagnosis:** LLM hallucinating
+- **Failure category:** Generation
+- **Root cause:** Missing strict grounding constraint causing LLM to answer using general knowledge.
+- **Suggested fix:** Tighten prompt, lower temperature.
 
-| Metric | Naive Baseline | Production | Δ |
-|--------|---------------|------------|---|
-| Faithfulness | | | |
-| Answer Relevancy | | | |
-| Context Precision | | | |
-| Context Recall | | | |
+### 3. Nhân viên tạm ứng 15 triệu, sau 20 ngày mới thanh toán. Bị phạt bao nhiêu?
+- **Worst metric:** faithfulness
+- **Score:** 0.0
+- **Diagnosis:** LLM hallucinating
+- **Failure category:** Generation
+- **Root cause:** The LLM generates a hallucinated penalty or makes assumptions based on missing policy details.
+- **Suggested fix:** Tighten prompt, lower temperature.
 
-## Bottom-5 Failures
+### 4. Nhân viên thử việc có được hưởng bảo hiểm sức khỏe PVI không?
+- **Worst metric:** answer_relevancy
+- **Score:** 0.0
+- **Diagnosis:** Answer doesn't match question
+- **Failure category:** Generation
+- **Root cause:** The LLM failed to directly address the core of the question, providing an overly broad or tangential response.
+- **Suggested fix:** Improve prompt template.
 
-### #1
-- **Question:**
-- **Expected:**
-- **Got:**
-- **Worst metric:**
-- **Error Tree:** Output sai → Context đúng? → Query OK? →
-- **Root cause:**
-- **Suggested fix:**
+### 5. Nghỉ phép không lương 20 ngày cần ai phê duyệt?
+- **Worst metric:** context_precision
+- **Score:** 0.5000
+- **Diagnosis:** Too many irrelevant chunks
+- **Failure category:** Retrieval
+- **Root cause:** The dense retrieval is picking up chunks with general "nghỉ phép" and "phê duyệt" terminology but missing the specific 20-day rule context.
+- **Suggested fix:** Add reranking or metadata filter.
 
-### #2
-(copy template)
-
-### #3
-(copy template)
-
-### #4
-(copy template)
-
-### #5
-(copy template)
-
-## Case Study (cho presentation)
-
-**Question chọn phân tích:**
-
-**Error Tree walkthrough:**
-1. Output đúng? →
-2. Context đúng? →
-3. Query rewrite OK? →
-4. Fix ở bước:
-
-**Nếu có thêm 1 giờ, sẽ optimize:**
--
+## Error Tree
+```text
+RAG Failure
+├── Chunking
+├── Retrieval
+│   ├── missing evidence
+│   ├── irrelevant evidence (Q5)
+│   └── wrong document/version
+├── Reranking
+│   └── relevant candidate ranked too low
+├── Augmentation
+│   ├── conflicting evidence
+│   └── missing multi-hop evidence
+└── Generation
+    ├── hallucination (Q1, Q2, Q3)
+    ├── unsupported numeric claim
+    └── irrelevant answer (Q4)
+```
